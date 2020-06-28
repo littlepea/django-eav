@@ -45,7 +45,7 @@ def validate_text(value):
     '''
     Raises ``ValidationError`` unless *value* type is ``str`` or ``unicode``
     '''
-    if not (type(value) == unicode or type(value) == str):
+    if not type(value) in [unicode, str]:
         raise ValidationError(_(u"Must be str or unicode"))
 
 
@@ -82,7 +82,7 @@ def validate_bool(value):
     '''
     Raises ``ValidationError`` unless *value* type is ``bool``
     '''
-    if not type(value) == bool:
+    if type(value) != bool:
         raise ValidationError(_(u"Must be a boolean"))
 
 

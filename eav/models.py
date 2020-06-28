@@ -237,11 +237,13 @@ class Attribute(models.Model):
         '''
         for validator in self.get_validators():
             validator(value)
-        if self.datatype == self.TYPE_ENUM:
-            if value not in self.enum_group.enums.all():
-                raise ValidationError(_(u"%(enum)s is not a valid choice "
-                                        u"for %(attr)s") % \
-                                       {'enum': value, 'attr': self})
+        if (
+            self.datatype == self.TYPE_ENUM
+            and value not in self.enum_group.enums.all()
+        ):
+            raise ValidationError(_(u"%(enum)s is not a valid choice "
+                                    u"for %(attr)s") % \
+                                   {'enum': value, 'attr': self})
 
     def save(self, *args, **kwargs):
         '''
@@ -274,7 +276,7 @@ class Attribute(models.Model):
         Returns a query set of :class:`EnumValue` objects for this attribute.
         Returns None if the datatype of this attribute is not *TYPE_ENUM*.
         '''
-        if not self.datatype == Attribute.TYPE_ENUM:
+        if self.datatype != Attribute.TYPE_ENUM:
             return None
         return self.enum_group.enums.all()
 
@@ -297,12 +299,12 @@ class Attribute(models.Model):
                                            entity_id=entity.pk,
                                            attribute=self)
         except Value.DoesNotExist:
-            if value == None or value == '':
+            if value in [None, '']:
                 return
             value_obj = Value.objects.create(entity_ct=ct,
                                              entity_id=entity.pk,
                                              attribute=self)
-        if value == None or value == '':
+        if value is None or value == '':
             value_obj.delete()
             return
 
@@ -371,13 +373,15 @@ class Value(models.Model):
         Raises ``ValidationError`` if this value's attribute is *TYPE_ENUM*
         and value_enum is not a valid choice for this value's attribute.
         '''
-        if self.attribute.datatype == Attribute.TYPE_ENUM and \
-           self.value_enum:
-            if self.value_enum not in self.attribute.enum_group.enums.all():
-                raise ValidationError(_(u"%(choice)s is not a valid " \
-                                        u"choice for %s(attribute)") % \
-                                        {'choice': self.value_enum,
-                                         'attribute': self.attribute})
+        if (
+            self.attribute.datatype == Attribute.TYPE_ENUM
+            and self.value_enum
+            and self.value_enum not in self.attribute.enum_group.enums.all()
+        ):
+            raise ValidationError(_(u"%(choice)s is not a valid " \
+                                    u"choice for %s(attribute)") % \
+                                    {'choice': self.value_enum,
+                                     'attribute': self.attribute})
 
     def _get_value(self):
         '''
@@ -496,7 +500,7 @@ class Entity(object):
                                                'err': e})
                 
     def get_values_dict(self):
-        values_dict = dict()
+        values_dict = {}
         for value in self.get_values():
             values_dict[value.attribute.slug] = value.value
 
